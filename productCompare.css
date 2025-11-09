@@ -1,0 +1,149 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+header {
+  background-color: #2e7d32;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+}
+
+.comparison {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+.comparison h2 {
+  color: #2e7d32;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.comparison-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.product-list {
+  border-right: 1px solid #eee;
+  padding-right: 1.5rem;
+}
+
+.product-list h3 {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.product-item {
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.product-item:hover {
+  border-color: #2e7d32;
+  background-color: #f8f9fa;
+}
+
+.product-item.selected {
+  border-color: #2e7d32;
+  background-color: #e8f5e9;
+}
+
+.product-item h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.product-item p {
+  margin: 0.25rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.comparison-table {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+th {
+  background-color: #f8f9fa;
+  color: #333;
+  font-weight: 600;
+}
+
+td:first-child {
+  font-weight: 500;
+  color: #333;
+}
+
+.highlight {
+  background-color: #e8f5e9;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem;
+  background-color: #2e7d32;
+  color: white;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .comparison-container {
+    grid-template-columns: 1fr;
+  }
+
+  .product-list {
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    padding-right: 0;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}

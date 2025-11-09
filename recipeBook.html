@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopWise - Recipe Book</title>
+    <link rel="stylesheet" href="recipeBook.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">ShopWise</div>
+        <nav>
+            <ul>
+                <li><a href="home.html">Home</a></li>
+                <li><a href="activity.html">Back to Activities</a></li>
+                <li><a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="recipe-container">
+        <h1>Recipe Book</h1>
+        
+        <div class="filter-section">
+            <div class="search-box">
+                <input type="text" id="recipeSearch" placeholder="Search recipes...">
+                <button onclick="searchRecipes()"><i class="fas fa-search"></i></button>
+            </div>
+            
+            <div class="filter-options">
+                <label>
+                    <input type="checkbox" id="matchCartIngredients" onchange="filterRecipes()">
+                    Show recipes matching cart ingredients
+                </label>
+            </div>
+        </div>
+
+        <div class="recipes-grid" id="recipesGrid">
+            <!-- Recipe cards will be dynamically added here -->
+        </div>
+
+        <div id="message" class="message"></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 ShopWise. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Server configuration
+        const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://127.0.0.1:5000' 
+            : 'http://' + window.location.hostname + ':5000';
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showMessage('Please log in to continue', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return null;
+            }
+            return token;
+        }
+
+        // Fetch recipes from API
+        async function fetchRecipes() {
+            const token = checkAuth();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/recipes`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch recipes');
+                }
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    displayRecipes(data.recipes);
+                } else {
+                    throw new Error(data.message || 'Failed to fetch recipes');
+                }
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        }
+
+        // Display recipes
+        function displayRecipes(recipesToShow) {
+            const recipesGrid = document.getElementById('recipesGrid');
+            
+            if (!recipesToShow || recipesToShow.length === 0) {
+                recipesGrid.innerHTML = '<div class="no-results">No recipes found. Try different search terms.</div>';
+                return;
+            }
+
+            recipesGrid.innerHTML = recipesToShow.map(recipe => `
+                <div class="recipe-card">
+                    <div class="recipe-image">
+                        <img src="${recipe.image}" alt="${recipe.name}" 
+                             onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+                    </div>
+                    <div class="recipe-info">
+                        <h3>${recipe.name}</h3>
+                        <p class="recipe-description">${recipe.description}</p>
+                        <div class="recipe-meta">
+                            <span><i class="far fa-clock"></i> ${recipe.cookingTime}</span>
+                            <span><i class="fas fa-signal"></i> ${recipe.difficulty}</span>
+                        </div>
+                        <div class="recipe-ingredients">
+                            <h4>Ingredients:</h4>
+                            <ul>
+                                ${recipe.ingredients.map(ingredient => 
+                                    `<li>${ingredient}</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search recipes
+        async function searchRecipes() {
+            const token = checkAuth();
+            if (!token) return;
+
+            const searchQuery = document.getElementById('recipeSearch').value;
+            const matchCartIngredients = document.getElementById('matchCartIngredients').checked;
+
+            try {
+                const response = await fetch(
+                    `${SERVER_URL}/api/recipes/search?query=${encodeURIComponent(searchQuery)}&matchCart=${matchCartIngredients}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to search recipes');
+                }
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    displayRecipes(data.recipes);
+                    if (data.recipes.length === 0) {
+                        if (matchCartIngredients) {
+                            showMessage('No recipes found that match your cart ingredients', 'info');
+                        } else if (searchQuery) {
+                            showMessage('No recipes found matching your search criteria', 'info');
+                        } else {
+                            showMessage('No recipes available', 'info');
+                        }
+                    }
+                } else {
+                    throw new Error(data.message || 'Failed to search recipes');
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                showMessage(error.message || 'Failed to search recipes. Please try again.', 'error');
+            }
+        }
+
+        // Filter recipes
+        function filterRecipes() {
+            const searchQuery = document.getElementById('recipeSearch').value;
+            const matchCartIngredients = document.getElementById('matchCartIngredients').checked;
+            
+            if (!searchQuery && !matchCartIngredients) {
+                fetchRecipes(); // If no search query and not matching cart, show all recipes
+            } else {
+                searchRecipes();
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            
+            // Only clear success messages automatically
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                    messageDiv.className = 'message';
+                }, 3000);
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchRecipes();
+        });
+    </script>
+</body>
+</html> 

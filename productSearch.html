@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopWise - Product Search</title>
+    <link rel="stylesheet" href="activity.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .search-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .search-box .search-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #2ecc71;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .search-box .autotype-text {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            color: #aaa;
+            pointer-events: none;
+            font-size: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .search-box .autotype-text span {
+            visibility: hidden;
+        }
+
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 72px; /* Width of search button + gap */
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .suggestion-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 4px;
+        }
+
+        .suggestion-price {
+            color: #2ecc71;
+            font-size: 14px;
+        }
+
+        .search-box button {
+            padding: 12px 24px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-box button:hover {
+            background-color: #27ae60;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-info {
+            padding: 0;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .product-price {
+            color: #2ecc71;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .add-to-cart {
+            width: 100%;
+            padding: 10px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-to-cart:hover {
+            background-color: #27ae60;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #666;
+            margin: 40px 0;
+            font-size: 18px;
+        }
+
+        .message {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .cart-preview {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 15px;
+            z-index: 1000;
+        }
+
+        .cart-preview h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+        }
+
+        .cart-items {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+
+        .cart-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .cart-item-price {
+            color: #2ecc71;
+        }
+
+        .cart-item-quantity {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .cart-total {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .view-cart-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #2ecc71;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .view-cart-btn:hover {
+            background-color: #27ae60;
+        }
+
+        .remove-item {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        .remove-item:hover {
+            color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">ShopWise</div>
+        <nav>
+            <ul>
+                <li><a href="home.html">Home</a></li>
+                <li><a href="activity.html">Back to Activities</a></li>
+                <li><a href="products.html">Products</a></li>
+                <li><a href="cart.html" style="display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-shopping-cart"></i> Cart
+                </a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div id="cartPreview" class="cart-preview" style="display: none;">
+        <h3>Your Cart</h3>
+        <div id="cartItems" class="cart-items"></div>
+        <div id="cartTotal" class="cart-total"></div>
+        <a href="productCompare.html" class="view-cart-btn">View Cart & Compare</a>
+    </div>
+
+    <main class="search-container">
+        <h1>Product Search</h1>
+        
+        <div class="search-box">
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" placeholder="Search for products..." oninput="handleSearchInput(event)" autocomplete="off">
+                <div id="autotypeText" class="autotype-text"></div>
+                <div id="suggestions" class="suggestions-dropdown"></div>
+            </div>
+            <button onclick="searchProducts()">Search</button>
+        </div>
+
+        <div id="message"></div>
+        <div id="productsGrid" class="products-grid"></div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 ShopWise. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Server configuration
+        const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://127.0.0.1:5000' 
+            : 'http://' + window.location.hostname + ':5000';
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showMessage('Please log in to continue', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return null;
+            }
+            return token;
+        }
+
+        let searchTimeout;
+
+        // Handle search input for suggestions and autotype
+        function handleSearchInput(event) {
+            const searchInput = document.getElementById('searchInput');
+            const suggestionsDiv = document.getElementById('suggestions');
+            const autotypeDiv = document.getElementById('autotypeText');
+            const query = searchInput.value.trim();
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Hide suggestions and autotype if input is empty
+            if (!query) {
+                suggestionsDiv.style.display = 'none';
+                autotypeDiv.innerHTML = '';
+                return;
+            }
+
+            // Set new timeout to fetch suggestions
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const token = checkAuth();
+                    if (!token) return;
+
+                    const response = await fetch(`${SERVER_URL}/api/products/search?q=${encodeURIComponent(query)}`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            showMessage('Please log in to continue', 'error');
+                            setTimeout(() => {
+                                window.location.href = 'login.html';
+                            }, 2000);
+                            return;
+                        }
+                        throw new Error('Failed to fetch suggestions');
+                    }
+
+                    const products = await response.json();
+                    
+                    // Show autotype suggestion
+                    if (products.length > 0) {
+                        const firstMatch = products[0].name;
+                        if (firstMatch.toLowerCase().startsWith(query.toLowerCase())) {
+                            autotypeDiv.innerHTML = `<span>${query}</span>${firstMatch.slice(query.length)}`;
+                        } else {
+                            autotypeDiv.innerHTML = '';
+                        }
+                    } else {
+                        autotypeDiv.innerHTML = '';
+                    }
+
+                    // Show dropdown suggestions
+                    displaySuggestions(products.slice(0, 5));
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                    autotypeDiv.innerHTML = '';
+                    showMessage(error.message || 'Error fetching suggestions', 'error');
+                }
+            }, 300);
+        }
+
+        // Handle keyboard navigation
+        document.getElementById('searchInput').addEventListener('keydown', function(event) {
+            const autotypeDiv = document.getElementById('autotypeText');
+            
+            if (event.key === 'Tab' && autotypeDiv.textContent) {
+                event.preventDefault();
+                this.value = autotypeDiv.textContent;
+                autotypeDiv.innerHTML = '';
+                searchProducts();
+            } else if (event.key === 'Enter') {
+                searchProducts();
+            }
+        });
+
+        // Display suggestions
+        function displaySuggestions(products) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            
+            if (!products || products.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            suggestionsDiv.innerHTML = products.map(product => `
+                <div class="suggestion-item" onclick="selectSuggestion('${product.name}')">
+                    <div class="suggestion-name">${product.name}</div>
+                    <div class="suggestion-price">$${product.price.toFixed(2)}</div>
+                </div>
+            `).join('');
+
+            suggestionsDiv.style.display = 'block';
+        }
+
+        // Select a suggestion
+        function selectSuggestion(productName) {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = productName;
+            document.getElementById('suggestions').style.display = 'none';
+            searchProducts(); // Automatically search when suggestion is selected
+        }
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(event) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            const searchInput = document.getElementById('searchInput');
+            
+            if (!searchInput.contains(event.target) && !suggestionsDiv.contains(event.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        // Search products
+        async function searchProducts() {
+            const token = checkAuth();
+            if (!token) return;
+
+            const searchQuery = document.getElementById('searchInput').value.trim();
+            if (!searchQuery) {
+                document.getElementById('productsGrid').innerHTML = 
+                    '<div class="no-results">Enter a search term to find products</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/products/search?q=${encodeURIComponent(searchQuery)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        showMessage('Please log in to continue', 'error');
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
+                        return;
+                    }
+                    throw new Error('Failed to fetch products');
+                }
+
+                const products = await response.json();
+                console.log('Search results:', products); // Debug log
+                displayProducts(products);
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(error.message || 'Error searching products. Please try again.', 'error');
+            }
+        }
+
+        // Display products
+        function displayProducts(products) {
+            const productsGrid = document.getElementById('productsGrid');
+            
+            if (!products || products.length === 0) {
+                productsGrid.innerHTML = '<div class="no-results">No products found. Try a different search term.</div>';
+                return;
+            }
+
+            productsGrid.innerHTML = products.map(product => `
+                <div class="product-card ${product.status === 'ECO' ? 'eco-friendly' : 'non-eco-friendly'}">
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">$${product.price.toFixed(2)}</div>
+                        <div class="product-description">${product.description || 'No description available'}</div>
+                        <button class="add-to-cart" onclick="addToCart(${product.id}, event)">Add to Cart</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display cart contents
+        function displayCart(cartItems) {
+            const cartPreview = document.getElementById('cartPreview');
+            const cartItemsDiv = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+
+            if (!cartItems || cartItems.length === 0) {
+                cartPreview.style.display = 'none';
+                return;
+            }
+
+            cartPreview.style.display = 'block';
+            let total = 0;
+
+            cartItemsDiv.innerHTML = cartItems.map(item => {
+                const itemTotal = item.product.price * item.quantity;
+                total += itemTotal;
+                return `
+                    <div class="cart-item">
+                        <img src="${item.product.image_url || 'https://via.placeholder.com/50x50?text=No+Image'}" 
+                             alt="${item.product.name}"
+                             onerror="this.src='https://via.placeholder.com/50x50?text=No+Image'">
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.product.name}</div>
+                            <div class="cart-item-price">$${item.product.price.toFixed(2)}</div>
+                            <div class="cart-item-quantity">Qty: ${item.quantity}</div>
+                        </div>
+                        <button class="remove-item" onclick="removeFromCart(${item.id})" title="Remove item">×</button>
+                    </div>
+                `;
+            }).join('');
+
+            cartTotal.textContent = `Total: $${total.toFixed(2)}`;
+
+            // Hide cart preview after 1 second
+            setTimeout(() => {
+                cartPreview.style.display = 'none';
+            }, 1000);
+        }
+
+        // Load cart contents
+        async function loadCart() {
+            const token = checkAuth();
+            if (!token) return;
+
+            try {
+                console.log('Loading cart contents...'); // Debug log
+                
+                const response = await fetch(`${SERVER_URL}/api/cart`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Cart response:', data); // Debug log
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch cart');
+                }
+
+                displayCart(data);
+            } catch (error) {
+                console.error('Error loading cart:', error);
+                showMessage('Error loading cart contents. Please try again.', 'error');
+            }
+        }
+
+        // Add to cart
+        async function addToCart(productId, event) {
+            const token = checkAuth();
+            if (!token) {
+                showMessage('Please log in to add items to cart', 'error');
+                return;
+            }
+
+            try {
+                console.log('Adding product to cart:', productId); // Debug log
+                
+                const response = await fetch(`${SERVER_URL}/api/cart`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        product_id: productId,
+                        quantity: 1
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Cart response:', data); // Debug log
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to add to cart');
+                }
+
+                showMessage('Product added to cart successfully!', 'success');
+                
+                // Disable the button temporarily
+                const button = event.target;
+                button.disabled = true;
+                button.textContent = 'Added to Cart';
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Add to Cart';
+                }, 2000);
+
+                // Refresh cart contents
+                await loadCart();
+
+            } catch (error) {
+                console.error('Error adding to cart:', error);
+                showMessage(error.message || 'Error adding to cart. Please try again.', 'error');
+            }
+        }
+
+        // Remove from cart
+        async function removeFromCart(cartItemId) {
+            const token = checkAuth();
+            if (!token) return;
+
+            try {
+                console.log('Removing item from cart:', cartItemId); // Debug log
+                
+                const response = await fetch(`${SERVER_URL}/api/cart/${cartItemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Remove response:', data); // Debug log
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to remove item from cart');
+                }
+
+                showMessage('Item removed from cart successfully!', 'success');
+                
+                // Refresh cart contents
+                await loadCart();
+
+            } catch (error) {
+                console.error('Error removing from cart:', error);
+                showMessage(error.message || 'Error removing item from cart. Please try again.', 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            console.log(`Showing message: ${message} (${type})`); // Debug log
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = `message ${type}`;
+            
+            // Clear message after 3 seconds
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = 'message';
+            }, 3000);
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'home.html';
+        }
+
+        // Load cart when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            // Show initial message instead of loading all products
+            document.getElementById('productsGrid').innerHTML = 
+                '<div class="no-results">Enter a search term to find products</div>';
+            loadCart();
+        });
+    </script>
+</body>
+</html> 

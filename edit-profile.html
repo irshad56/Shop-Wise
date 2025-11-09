@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - ShopWise</title>
+    <link rel="stylesheet" href="edit-profile.css">
+    <link rel="stylesheet" href="profile-dropdown.css">
+</head>
+<body>
+    <header>
+        <div class="logo">ShopWise</div>
+        <nav>
+            <ul>
+                <li><a href="home.html">Home</a></li>
+                <li><a href="activity.html">Activity</a></li>
+                <li><a href="products.html">Products</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li id="profileNav">
+                    <div class="profile-container">
+                        <img src="images/profile.webp" alt="Profile" class="profile-icon" id="profileIcon">
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="profile-header">
+                                <img src="images/profile.webp" alt="Profile" class="profile-picture" id="profilePicture">
+                                <div class="profile-username" id="profileUsername"></div>
+                                <div class="profile-email" id="profileEmail"></div>
+                            </div>
+                            <ul class="profile-menu">
+                                <li><a href="#" id="editProfileLink">Edit Profile</a></li>
+                                <li><a href="#" id="logoutBtn" class="logout-link">Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="edit-profile-container">
+        <div class="edit-profile-card">
+            <h1>Edit Profile</h1>
+            <form id="editProfileForm" class="edit-profile-form">
+                <div class="profile-image-section">
+                    <div class="profile-image-container">
+                        <img src="images/profile.webp" alt="Profile" id="currentProfileImage">
+                        <div class="image-overlay">
+                            <label for="profileImageUpload" class="upload-button">
+                                <span>Change Photo</span>
+                            </label>
+                            <input type="file" id="profileImageUpload" accept="image/*" hidden>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="save-button">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // Server configuration
+        const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://127.0.0.1:5000' 
+            : 'http://' + window.location.hostname + ':5000';
+
+        // Fetch user profile data
+        async function fetchUserProfile() {
+            try {
+                console.log('Fetching user profile...');
+                console.log('Token:', localStorage.getItem('token'));
+                const response = await fetch(`${SERVER_URL}/api/user/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                const data = await response.json();
+                console.log('Fetched user data:', data);
+                if (data.username && data.email) {
+                    // Update profile dropdown
+                    document.getElementById('profileUsername').textContent = data.username;
+                    document.getElementById('profileEmail').textContent = data.email;
+                    // Update form fields
+                    document.getElementById('username').value = data.username;
+                    document.getElementById('email').value = data.email;
+                    document.getElementById('phone').value = data.phone || '';
+                    // Update profile images if available
+                    if (data.profilePicture) {
+                        document.getElementById('currentProfileImage').src = data.profilePicture;
+                        document.getElementById('profileIcon').src = data.profilePicture;
+                        document.getElementById('profilePicture').src = data.profilePicture;
+                    }
+                } else {
+                    console.error('API did not return username/email:', data);
+                }
+            } catch (error) {
+                console.error('Error fetching user profile:', error);
+            }
+        }
+
+        // Handle profile image upload
+        document.getElementById('profileImageUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('currentProfileImage').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('username', document.getElementById('username').value);
+            formData.append('email', document.getElementById('email').value);
+            formData.append('phone', document.getElementById('phone').value);
+            
+            const profileImage = document.getElementById('profileImageUpload').files[0];
+            if (profileImage) {
+                formData.append('profilePicture', profileImage);
+            }
+
+            try {
+                const response = await fetch(`${SERVER_URL}/api/user/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('Profile updated successfully!');
+                    window.location.href = 'activity.html';
+                } else {
+                    alert(data.message || 'Failed to update profile');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('Failed to update profile');
+            }
+        });
+
+        // Check auth and fetch profile when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+            } else {
+                fetchUserProfile();
+            }
+        });
+    </script>
+    <script src="profile-dropdown.js"></script>
+</body>
+</html> 

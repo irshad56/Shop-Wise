@@ -1,0 +1,41 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f5fdf5;
+  color: #2f4f2f;
+}
+
+header {
+  background-color: #2e7d32;
+  color: white;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+header .logo {
+  font-size: 24px;
+}
+
+button {
+  background-color: #388e3c;
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #2e7d32;
+}
+
+#alternativesList {
+  margin-top: 20px;
+}
+
+.alternative {
+  background-color: #dcedc1;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}

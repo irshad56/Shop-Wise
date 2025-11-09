@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Barcode Scanning</title>
+  <link rel="stylesheet" href="barcode.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <div class="logo">ShopWise</div>
+    <nav>
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="activity.html">Back To activity</a></li>
+        <li><a href="cart.html">Cart</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="scanner-container">
+    <div class="scanner-tabs">
+      <button class="tab-btn active" data-tab="barcode">
+        <i class="fas fa-barcode"></i>
+        Barcode Scanner
+      </button>
+      <button class="tab-btn" data-tab="qr">
+        <i class="fas fa-qrcode"></i>
+        QR Code Scanner
+      </button>
+    </div>
+
+    <!-- Barcode Scanner Section -->
+    <div class="scanner-section active" id="barcode-section">
+      <h2>Barcode Scanner</h2>
+      <div class="video-container">
+        <video id="barcode-video" playsinline></video>
+        <div id="barcode-scan-region" class="scan-region"></div>
+      </div>
+      <button id="start-barcode-scan" class="scan-btn">
+        <i class="fas fa-barcode"></i>
+        Start Barcode Scan
+      </button>
+      <button id="stop-barcode-scan" class="scan-btn stop" style="display: none;">
+        <i class="fas fa-stop"></i>
+        Stop Scanning
+      </button>
+      <div id="barcode-result" class="result-container hidden">
+        <h3>Product Details</h3>
+        <p id="barcode-product-name"></p>
+        <p id="barcode-product-desc"></p>
+        <p id="barcode-sustainability-score"></p>
+      </div>
+    </div>
+
+    <!-- QR Code Scanner Section -->
+    <div class="scanner-section" id="qr-section">
+      <h2>QR Code Scanner</h2>
+      <div class="video-container">
+        <video id="qr-video" playsinline></video>
+        <div id="qr-scan-region" class="scan-region"></div>
+      </div>
+      <button id="start-qr-scan" class="scan-btn">
+        <i class="fas fa-qrcode"></i>
+        Start QR Scan
+      </button>
+      <button id="stop-qr-scan" class="scan-btn stop" style="display: none;">
+        <i class="fas fa-stop"></i>
+        Stop Scanning
+      </button>
+      <div id="qr-result" class="result-container hidden">
+        <h3>Product Details</h3>
+        <p id="qr-product-name"></p>
+        <p id="qr-product-desc"></p>
+        <p id="qr-sustainability-score"></p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 ShopVice</p>
+  </footer>
+
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script src="barcodescripted.js"></script>
+</body>
+</html>

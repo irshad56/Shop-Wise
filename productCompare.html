@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ShopWise - Product Comparison</title>
+  <link rel="stylesheet" href="activity.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .comparison-container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 12px;
+      border: 1px solid #eee;
+      text-align: left;
+    }
+
+    .comparison-table th {
+      background-color: #2ecc71;
+      color: white;
+      font-weight: bold;
+    }
+
+    .comparison-table tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .feature-category {
+      background-color: #f5f5f5;
+      font-weight: bold;
+    }
+
+    .sustainability-score {
+      font-size: 24px;
+      color: #2ecc71;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .score-label {
+      font-size: 16px;
+      color: #666;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .no-items {
+      text-align: center;
+      color: #666;
+      margin: 40px 0;
+      font-size: 18px;
+    }
+
+    .add-more {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .add-more a {
+      background-color: #2ecc71;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+    }
+
+    .add-more a:hover {
+      background-color: #27ae60;
+    }
+
+    .remove-btn {
+      padding: 8px 12px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .remove-btn:hover {
+      background-color: #c0392b;
+    }
+
+    .feature-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-value i {
+      font-size: 16px;
+    }
+
+    .feature-value.positive i {
+      color: #2ecc71;
+    }
+
+    .feature-value.negative i {
+      color: #e74c3c;
+    }
+
+    .product-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .product-header img {
+      display: none;
+    }
+
+    .individual-score {
+      font-size: 14px;
+      color: #2e7d32;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    .best-worst-labels {
+      font-size: 0.9rem;
+      color: #333;
+      margin-top: 0.25rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">ShopWise</div>
+    <nav>
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="activity.html">Back to Activities</a></li>
+        <li><a href="productSearch.html">Back To Search</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="comparison-container">
+    <h1>Product Comparison</h1>
+    
+    <div>
+      <div id="sustainabilityScore" class="sustainability-score"></div>
+      <div id="scoreLabel" class="score-label"></div>
+      <div id="bestProductName" class="best-worst-labels"></div>
+      <div id="worstProductName" class="best-worst-labels"></div>
+    </div>
+
+    <div id="comparisonTable"></div>
+
+    <div id="noItems" class="no-items" style="display: none;">
+      <p>No items in cart to compare. Add some products to your cart first!</p>
+    </div>
+
+    <div class="add-more">
+      <a href="productSearch.html">Add More Products</a>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 ShopWise. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Server configuration
+    const SERVER_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? 'http://127.0.0.1:5000' 
+      : 'http://' + window.location.hostname + ':5000';
+
+    // Check authentication
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
+      }
+      return token;
+    }
+
+    // Calculate sustainability score for a single product
+    function calculateProductScore(product) {
+      let productScore = 0;
+      let productMaxScore = 0;
+
+      product.features.forEach(feature => {
+        if (feature.feature_category === 'Environmental') {
+          const score = parseFloat(feature.importance_score);
+          productScore += score;
+          productMaxScore += 1.5;
+        }
+      });
+
+      return (productScore / productMaxScore) * 100;
+    }
+
+    // Calculate overall sustainability score
+    function calculateSustainabilityScore(products) {
+      let totalScore = 0;
+      let maxScore = 0;
+
+      products.forEach(product => {
+        totalScore += calculateProductScore(product);
+        maxScore += 100;
+      });
+
+      return totalScore / products.length;
+    }
+
+    // Get feature icon
+    function getFeatureIcon(feature) {
+      const value = feature.feature_value.toLowerCase();
+      const unit = feature.feature_unit ? feature.feature_unit.toLowerCase() : '';
+      
+      if (feature.feature_category === 'Environmental') {
+        if (value.includes('yes') || value.includes('100%') || value.includes('low') || 
+            value.includes('a+') || value.includes('a') || value.includes('high')) {
+          return '<i class="fas fa-check-circle"></i>';
+        } else if (value.includes('no') || value.includes('0%') || value.includes('high') || 
+                  value.includes('d') || value.includes('c') || value.includes('low')) {
+          return '<i class="fas fa-times-circle"></i>';
+        }
+      }
+      return '';
+    }
+
+    // Display comparison table
+    function displayComparison(products) {
+      if (products.length === 0) {
+        document.getElementById('noItems').style.display = 'block';
+        document.getElementById('comparisonTable').innerHTML = '';
+        document.getElementById('sustainabilityScore').textContent = '';
+        document.getElementById('scoreLabel').textContent = '';
+        document.getElementById('bestProductName').textContent = '';
+        document.getElementById('worstProductName').textContent = '';
+        return;
+      }
+
+      document.getElementById('noItems').style.display = 'none';
+
+      // Find best and worst products
+      let bestProduct = products[0];
+      let worstProduct = products[0];
+      let bestScore = calculateProductScore(products[0]);
+      let worstScore = calculateProductScore(products[0]);
+
+      products.forEach(product => {
+        const score = calculateProductScore(product);
+        if (score > bestScore) {
+          bestScore = score;
+          bestProduct = product;
+        }
+        if (score < worstScore) {
+          worstScore = score;
+          worstProduct = product;
+        }
+      });
+
+      // Display scores
+      document.getElementById('sustainabilityScore').textContent = `${bestScore.toFixed(1)}%`;
+      document.getElementById('scoreLabel').textContent = 'Best Sustainability Score';
+      document.getElementById('bestProductName').textContent = `Best: ${bestProduct.product_name}`;
+      document.getElementById('worstProductName').textContent = `Worst: ${worstProduct.product_name} (${worstScore.toFixed(1)}%)`;
+
+      // Get all unique features and categories
+      const allFeatures = new Map();
+      products.forEach(product => {
+        product.features.forEach(feature => {
+          const key = `${feature.feature_category}:${feature.feature_name}`;
+          if (!allFeatures.has(key)) {
+            allFeatures.set(key, {
+              name: feature.feature_name,
+              category: feature.feature_category,
+              unit: feature.feature_unit
+            });
+          }
+        });
+      });
+
+      // Group features by category
+      const categories = [...new Set(products[0].features.map(f => f.feature_category))];
+      
+      // Create table HTML
+      let tableHTML = `
+        <table class="comparison-table">
+          <tr>
+            <th>Feature</th>
+            ${products.map(p => `<th>${p.product_name}</th>`).join('')}
+          </tr>
+          <tr>
+            <td class="feature-category">Sustainability Score</td>
+            ${products.map(p => `<td>${calculateProductScore(p).toFixed(1)}%</td>`).join('')}
+          </tr>
+
+            <td class="feature-category">Price</td>
+            ${products.map(p => `<td>$${p.price.toFixed(2)}</td>`).join('')}
+          </tr>
+      `;
+
+      // Add features by category
+      categories.forEach(category => {
+        tableHTML += `<tr><td colspan="${products.length + 1}" class="feature-category">${category}</td></tr>`;
+        
+        const categoryFeatures = Array.from(allFeatures.values())
+          .filter(f => f.category === category);
+
+        categoryFeatures.forEach(feature => {
+          tableHTML += `
+            <tr>
+              <td>${feature.name}</td>
+              ${products.map(p => {
+                const productFeature = p.features.find(f => 
+                  f.feature_name === feature.name && f.feature_category === category
+                );
+                if (!productFeature) return '<td>-</td>';
+                
+                const icon = getFeatureIcon(productFeature);
+                const value = productFeature.feature_value + 
+                  (productFeature.feature_unit ? ' ' + productFeature.feature_unit : '');
+                
+                return `<td>
+                  <div class="feature-value ${icon ? 'positive' : ''}">
+                    ${icon}${value}
+                  </div>
+                </td>`;
+              }).join('')}
+            </tr>
+          `;
+        });
+      });
+
+      // Add remove buttons row
+      tableHTML += `
+        <tr>
+          <td class="feature-category">Actions</td>
+          ${products.map(p => `
+            <td>
+              <button class="remove-btn" onclick="removeFromCart(${p.product_id})">
+                Remove
+              </button>
+            </td>
+          `).join('')}
+        </tr>
+      `;
+
+      tableHTML += '</table>';
+      document.getElementById('comparisonTable').innerHTML = tableHTML;
+    }
+
+    // Load cart comparison data
+    async function loadCartComparison() {
+      const token = checkAuth();
+      if (!token) return;
+
+      try {
+        const response = await fetch(`${SERVER_URL}/api/cart/comparison`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load cart comparison');
+        }
+
+        const products = await response.json();
+        displayComparison(products);
+
+      } catch (error) {
+        console.error('Error loading cart comparison:', error);
+        document.getElementById('comparisonTable').innerHTML = `
+          <div class="error-message">
+            Error loading comparison data. Please try again.
+          </div>
+        `;
+      }
+    }
+
+    // Remove from cart
+    async function removeFromCart(productId) {
+      const token = checkAuth();
+      if (!token) return;
+
+      try {
+        const cartResponse = await fetch(`${SERVER_URL}/api/cart`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!cartResponse.ok) {
+          throw new Error('Failed to fetch cart data');
+        }
+
+        const cartItems = await cartResponse.json();
+        const cartItem = cartItems.find(item => item.product.id === productId);
+
+        if (!cartItem) {
+          throw new Error('Product not found in cart');
+        }
+
+        const response = await fetch(`${SERVER_URL}/api/cart/${cartItem.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to remove item from cart');
+        }
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message success';
+        messageDiv.textContent = 'Product removed from cart successfully!';
+        document.querySelector('.comparison-container').insertBefore(messageDiv, document.getElementById('comparisonTable'));
+        
+        setTimeout(() => {
+          messageDiv.remove();
+        }, 3000);
+
+        await loadCartComparison();
+
+      } catch (error) {
+        console.error('Error:', error);
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message error';
+        messageDiv.textContent = error.message || 'Error removing item from cart. Please try again.';
+        document.querySelector('.comparison-container').insertBefore(messageDiv, document.getElementById('comparisonTable'));
+        
+        setTimeout(() => {
+          messageDiv.remove();
+        }, 3000);
+      }
+    }
+
+    // Logout function
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'home.html';
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCartComparison();
+    });
+  </script>
+</body>
+</html>

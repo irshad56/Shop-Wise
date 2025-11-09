@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shopping Cart</title>
+  <link rel="stylesheet" href="cart.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .cart-item {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s ease;
+    }
+
+    .cart-item:hover {
+      transform: translateY(-2px);
+    }
+
+    .item-info {
+      flex: 1;
+    }
+
+    .item-name {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 8px;
+    }
+
+    .item-details {
+      color: #666;
+    }
+
+    .item-price {
+      font-size: 1.1em;
+      color: #2ecc71;
+      font-weight: bold;
+    }
+
+    .item-quantity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 20px;
+    }
+
+    .item-quantity button {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .item-quantity button:hover {
+      background: #e9ecef;
+    }
+
+    .item-quantity span {
+      font-weight: bold;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    .remove-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .remove-btn:hover {
+      background: #ff5252;
+    }
+
+    .cart-notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #2ecc71;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: none;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .empty-cart {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 1.2em;
+    }
+
+    .total-price {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .total-price p {
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #2c3e50;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">ShopWise</div>
+    <nav>
+      <ul>
+        <li><a href="home.html">Home</a></li>
+        <li><a href="productSearch.html">Back To Search</a></li>
+        <li><a href="activity.html">Back To Activity</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <section class="cart">
+    <h2>Your Cart</h2>
+    <div id="cartItems"></div>
+    <div id="totalPrice" class="total-price">
+      <p>Total: $0.00</p>
+    </div>
+    <div class="cart-actions">
+      <button id="compareBtn" class="compare-btn" onclick="window.location.href='productCompare.html'">
+        <i class="fas fa-balance-scale"></i>
+        Compare Products
+      </button>
+    </div>
+  </section>
+
+  <div id="cartNotification" class="cart-notification"></div>
+
+  <footer>
+    <p>&copy; 2025 ShopWise</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+  <script src="cartScripted.js"></script>
+  <script>
+    // Function to show notification when product is added
+    function showCartNotification(productName) {
+      const notification = document.getElementById('cartNotification');
+      notification.textContent = `${productName} added to cart!`;
+      notification.style.display = 'block';
+      
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 2000);
+    }
+
+    // Override the addToCart function to show notification
+    const originalAddToCart = window.addToCart;
+    window.addToCart = function(product) {
+      originalAddToCart(product);
+      showCartNotification(product.name);
+    };
+  </script>
+</body>
+</html>
